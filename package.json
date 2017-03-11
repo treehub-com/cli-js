@@ -1,15 +1,15 @@
 {
   "name": "treehub-cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Treehub CLI",
   "main": "./bin/treehub",
-  "bin" : {
-    "treehub" : "./bin/treehub",
-    "treehub-bundle" : "./bin/treehub-bundle",
-    "treehub-login" : "./bin/treehub-login",
-    "treehub-logout" : "./bin/treehub-logout",
-    "treehub-publish" : "./bin/treehub-publish",
-    "treehub-validate" : "./bin/treehub-validate"
+  "bin": {
+    "treehub": "./bin/treehub",
+    "treehub-bundle": "./bin/treehub-bundle",
+    "treehub-login": "./bin/treehub-login",
+    "treehub-logout": "./bin/treehub-logout",
+    "treehub-publish": "./bin/treehub-publish",
+    "treehub-validate": "./bin/treehub-validate"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
