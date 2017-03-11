@@ -1,0 +1,32 @@
+{
+  "name": "treehub-cli",
+  "version": "0.0.0",
+  "description": "Treehub CLI",
+  "main": "./bin/treehub",
+  "bin" : {
+    "treehub" : "./bin/treehub",
+    "treehub-bundle" : "./bin/treehub-bundle",
+    "treehub-login" : "./bin/treehub-login",
+    "treehub-logout" : "./bin/treehub-logout",
+    "treehub-publish" : "./bin/treehub-publish",
+    "treehub-validate" : "./bin/treehub-validate"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/treehub-com/cli-js.git"
+  },
+  "keywords": [],
+  "author": "John Clark <john@treehub.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/treehub-com/cli-js/issues"
+  },
+  "homepage": "https://github.com/treehub-com/cli-js#readme",
+  "dependencies": {
+    "commander": "2.9.0",
+    "jszip": "3.1.3"
+  }
+}

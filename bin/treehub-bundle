@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+const bundle = require('../lib/bundle.js');
+const path = require('path');
+const program = require('commander');
+const {version} = require('../package.json');
+
+program
+  .version(version)
+  .option('-o, --output [dir]', 'Output Directory')
+  .arguments('<dir>')
+  .action((dir) => {
+    const targetDir = path.join(process.cwd(), dir);
+    let outputDir = targetDir;
+    if (program.output !== undefined) {
+      outputDir = path.join(process.cwd(), program.output);
+    }
+    // TODO validate targetDir
+    bundle({
+      targetDir,
+      outputDir,
+    })
+    .catch((error) => {
+      console.error(error);
+    })
+  });
+
+program.parse(process.argv);

@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+
+const program = require('commander');
+const {version} = require('../package.json');
+
+program
+  .version(version)
+  .command('bundle <dir>', 'bundle up a treehub package')
+  .command('login', 'login to your treehub account')
+  .command('logout', 'logout of your treehub account')
+  .command('publish <dir>', 'publish a treehub package')
+  .command('validate <dir>', 'validate treehub.json and referenced files')
+  .parse(process.argv);
