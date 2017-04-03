@@ -10,4 +10,5 @@ program
   .command('logout', 'logout of your treehub account')
   .command('publish <dir>', 'publish a treehub package')
   .command('validate <dir>', 'validate treehub.json and referenced files')
+  .command('whoami', 'see who you are logged in as')
   .parse(process.argv);

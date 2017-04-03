@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+
+const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
+const program = require('commander');
+const {version} = require('../package.json');
+const defaultConfigPath = path.join(process.env.HOME, '.treehub.json');
+
+program
+  .version(version)
+  .option('-c, --config [file]', 'Configuration File', defaultConfigPath);
+
+program.parse(process.argv);
+
+whoami({
+    configPath: path.resolve(program.config),
+  })
+  .then((message) => console.log(message))
+  .catch((error) => console.error(error));
+
+/* Functions */
+
+async function whoami({configPath}) {
+  const config = await getConfig({configPath});
+  if (config.token === undefined) {
+    return 'Not logged in';
+  }
+  const message = await getUser({token: config.token});
+  return message;
+}
+
+async function getConfig({configPath}) {
+  try {
+    const contents = fs.readFileSync(configPath, 'utf8');
+    const json = JSON.parse(contents);
+    return json;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return {};
+    } else {
+      throw error;
+    }
+  }
+}
+
+async function getUser({token}) {
+  const res = await fetch('https://treehub.com/', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Token ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: `query {
+        x: user {
+          email
+          username
+        }
+      }`,
+    }),
+  });
+  if (res.status !== 200) {
+    throw new Error(`Could not create code: ${res.status}`);
+  }
+  const body = await res.json();
+  if (body.errors && body.errors.length > 0) {
+    if (body.errors[0].message === 'Unauthorized') {
+      return `Invalid Token`;
+    } else {
+      throw new Error(body.errors[0].message);
+    }
+  }
+  const response = body.data.x;
+  return `${response.username} <${response.email}>`;
+}
