@@ -11,6 +11,9 @@
     "treehub-publish": "./bin/treehub-publish",
     "treehub-validate": "./bin/treehub-validate"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
