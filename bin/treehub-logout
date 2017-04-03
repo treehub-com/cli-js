@@ -1,3 +1,45 @@
 #!/usr/bin/env node
 
-console.log('Not Implemented');
+const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
+const program = require('commander');
+const {version} = require('../package.json');
+const defaultConfigPath = path.join(process.env.HOME, '.treehub.json');
+
+program
+  .version(version)
+  .option('-c, --config [file]', 'Configuration File', defaultConfigPath);
+
+program.parse(process.argv);
+
+logout({
+    configPath: path.resolve(program.config),
+  })
+  .catch((error) => console.error(error));
+
+/* Functions */
+
+async function logout({configPath}) {
+  const config = await getConfig({configPath});
+  delete config.token;
+  await saveConfig({configPath, config});
+}
+
+async function getConfig({configPath}) {
+  try {
+    const contents = fs.readFileSync(configPath, 'utf8');
+    const json = JSON.parse(contents);
+    return json;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return {};
+    } else {
+      throw error;
+    }
+  }
+}
+
+async function saveConfig({configPath, config}) {
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
+}
