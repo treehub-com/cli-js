@@ -1,3 +1,128 @@
 #!/usr/bin/env node
 
-console.log('Not Implemented');
+const fetch = require('node-fetch');
+const fs = require('fs');
+const inquirer = require('inquirer');
+const path = require('path');
+const program = require('commander');
+const {version} = require('../package.json');
+const defaultConfigPath = path.join(process.env.HOME, '.treehub.json');
+
+const loginPrompt = {
+  name: 'login',
+  message: 'Treehub Login',
+};
+const codePrompt = {
+  name: 'code',
+  message: 'Treehub Code',
+};
+
+program
+  .version(version)
+  .option('-c, --config [file]', 'Configuration File', defaultConfigPath);
+
+program.parse(process.argv);
+
+performLogin({
+    configPath: path.resolve(program.config),
+  })
+  .then((message) => console.log(message))
+  .catch((error) => console.error(error));
+
+/* Functions */
+
+async function performLogin({configPath}) {
+  await ensureConfigPath({configPath});
+  const {login} = await inquirer.prompt([loginPrompt]);
+  const codeResponse = await createCode({login});
+  console.log(codeResponse);
+  const {code} = await inquirer.prompt([codePrompt]);
+  const token = await createToken({code});
+  await saveToken({token, configPath});
+  return 'Logged in';
+}
+
+async function ensureConfigPath({configPath}) {
+  try {
+    const contents = fs.readFileSync(configPath, 'utf8');
+    const json = JSON.parse(contents);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      fs.writeFileSync(configPath, '{}', 'utf8');
+    } else {
+      throw error;
+    }
+  }
+}
+
+async function createCode({login}) {
+  const res = await fetch('https://treehub.com/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: `mutation x($input: CodeCreateInput!) {
+        x: createCode(input:$input) {
+          message
+          errors {key message}
+        }
+      }`,
+      variables: {
+        input: {
+          login,
+        }
+      }
+    }),
+  });
+  if (res.status !== 200) {
+    throw new Error(`Could not create code: ${res.status}`);
+  }
+  const body = await res.json();
+  const response = body.data.x;
+  if (response.errors.length > 0) {
+    throw new Error(response.errors[0].message);
+  }
+  return response.message;
+};
+
+async function createToken({code}) {
+  const res = await fetch('https://treehub.com/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: `mutation x($input: TokenCreateInput!) {
+        x: createToken(input:$input) {
+          token {
+            token
+          }
+          errors {key message}
+        }
+      }`,
+      variables: {
+        input: {
+          code,
+          description: 'Treehub CLI login',
+        }
+      }
+    }),
+  });
+  if (res.status !== 200) {
+    throw new Error(`Could not create token: ${res.status}`);
+  }
+  const body = await res.json();
+  const response = body.data.x;
+  if (response.errors.length > 0) {
+    throw new Error(response.errors[0].message);
+  }
+  return response.token.token;
+};
+
+async function saveToken({token, configPath}) {
+  const contents = fs.readFileSync(configPath, 'utf8');
+  const json = JSON.parse(contents);
+  json.token = token;
+  fs.writeFileSync(configPath, JSON.stringify(json, null, 2), 'utf8');
+}
