@@ -6,6 +6,7 @@ const {version} = require('../package.json');
 program
   .version(version)
   .command('bundle <dir>', 'bundle up a treehub package')
+  .command('create <package>', 'create a treehub package')
   .command('login', 'login to your treehub account')
   .command('logout', 'logout of your treehub account')
   .command('publish <dir>', 'publish a treehub package')
