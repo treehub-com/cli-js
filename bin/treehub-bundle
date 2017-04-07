@@ -10,16 +10,21 @@ program
   .option('-o, --output [dir]', 'Output Directory')
   .arguments('<dir>')
   .action((dir) => {
-    const targetDir = path.join(process.cwd(), dir);
+    const targetDir = path.resolve(process.cwd(), dir);
     let outputDir = targetDir;
     if (program.output !== undefined) {
-      outputDir = path.join(process.cwd(), program.output);
+      outputDir = path.resolve(process.cwd(), program.output);
     }
-    // TODO validate targetDir
-    bundle({
-      targetDir,
-      outputDir,
+    // TODO validate target directory
+    // TODO validate output directory
+    let outputPath;
+
+    bundle.create({dir: targetDir})
+    .then(({name, zip}) => {
+      outputPath = path.join(outputDir, `${name}.zip`);
+      return bundle.write({zip, file:outputPath});
     })
+    .then(() => console.log(`Package written to ${outputPath}`))
     .catch((error) => {
       console.error(error);
     })

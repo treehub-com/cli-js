@@ -1,3 +1,71 @@
 #!/usr/bin/env node
 
-console.log('Not Implemented');
+const bundle = require('../lib/bundle.js');
+const config = require('../lib/config.js');
+const fetch = require('node-fetch');
+const path = require('path');
+const program = require('commander');
+const {version} = require('../package.json');
+const defaultConfigPath = path.join(process.env.HOME, '.treehub.json');
+
+program
+  .version(version)
+  .option('-c, --config [file]', 'Configuration File', defaultConfigPath)
+  .arguments('<dir>')
+  .action((dir) => {
+    const targetDir = path.resolve(process.cwd(), dir);
+    publish({targetDir})
+      .catch((error) => {
+        console.error(error);
+      });
+  });
+
+program.parse(process.argv);
+
+async function publish({targetDir}) {
+  const {token} = await config.load({configPath: program.config});
+  if (!token) {
+    console.error('Must be logged in to publish');
+    process.exit(1);
+  }
+  const {name, zip} = await bundle.create({dir: targetDir});
+  const base64 = await zip.generateAsync({type: 'base64'});
+  const version = await publishPackage({token, name, zip:base64});
+  console.log(`Published ${name}@${version}`);
+}
+
+async function publishPackage({token, name, zip}) {
+  const res = await fetch('https://treehub.com/', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Token ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: `mutation x($input: PackagePublishInput!) {
+        x: publishPackage(input:$input) {
+          version
+          errors {key message}
+        }
+      }`,
+      variables: {
+        input: {
+          id: name,
+          zip,
+        }
+      }
+    }),
+  });
+  if (res.status !== 200) {
+    throw new Error(`Could not publish package: ${res.status}`);
+  }
+  const body = await res.json();
+  if (body.errors && body.errors.length > 0) {
+    throw new Error(body.errors[0].message);
+  }
+  const response = body.data.x;
+  if (response.errors.length > 0) {
+    throw new Error(response.errors[0].message);
+  }
+  return response.version;
+}
